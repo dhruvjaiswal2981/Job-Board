@@ -1,0 +1,113 @@
+/* General Styles */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Roboto', Arial, sans-serif;
+  background-color: #f4f6f8; /* Light background color */
+}
+
+/* App Container Styles */
+.app-container {
+  padding-bottom: 80px; /* Space for bottom nav */
+  min-height: 100vh; /* Full viewport height */
+  padding: 20px;
+}
+
+/* Bottom Navigation Styles */
+.bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  background-color: #007bff; /* Primary color */
+  padding: 15px 10px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  border-top: 2px solid #0056b3; /* Darker border for distinction */
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.nav-link {
+  color: white; /* White text on dark background */
+  text-decoration: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color 0.3s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-link:hover {
+  background-color: #0056b3; /* Darker on hover */
+  transform: translateY(-3px); /* Lift effect on hover */
+}
+
+.nav-link.active {
+  background-color: #28a745; /* Green for active state */
+  color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Highlight shadow */
+}
+
+/* Add icons if needed */
+.nav-icon {
+  font-size: 18px;
+  display: inline-block;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .bottom-nav {
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    background-color: #0056b3; /* Darker background for mobile */
+  }
+
+  .nav-link {
+    width: 100%;
+    justify-content: center;
+    padding: 15px;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    font-size: 18px;
+  }
+
+  .nav-link:hover {
+    transform: none; /* Disable lift effect on mobile */
+  }
+}
+
+
+
+
+
+/* Header Styles (if needed) */
+.header {
+  background-color: #007bff;
+  padding: 15px;
+  color: white;
+  text-align: center;
+  border-bottom: 2px solid #0056b3;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+/* Footer Styles (if needed) */
+.footer {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  border-top: 2px solid #0056b3;
+}

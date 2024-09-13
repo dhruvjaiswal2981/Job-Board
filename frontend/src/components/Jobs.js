@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import './jobs.css'; // Assuming you create a Jobs.css file for the styles
 
 const Jobs = ({ setBookmarkedJobs, bookmarkedJobs }) => {
   const [jobs, setJobs] = useState([]);
@@ -6,56 +9,29 @@ const Jobs = ({ setBookmarkedJobs, bookmarkedJobs }) => {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [jobType, setJobType] = useState('All'); // Filter for job types
+  const [sortOrder, setSortOrder] = useState(''); // Sort jobs by salary
+  const navigate = useNavigate();
 
-  const fetchJobs = useCallback(() => {
+  const fetchJobs = useCallback(async () => {
     setLoading(true);
     try {
-      // Dummy data for jobs
-      const dummyData = [
-        {
-          id: 631160,
-          title: 'Telecallers wanted',
-          primary_details: {
-            Place: 'Ameerpet, Hyderabad',
-            Salary: '₹12000 - ₹16000',
-            Job_Type: 'ఆఫీస్ జాబ్ ',
-            Experience: 'Any Experience',
-            Qualification: 'Graduate'
-          },
-          contact_preference: {
-            whatsapp_no: '8465809861'
-          },
-          // Add other properties as needed
-        },
-        {
-          id: 631010,
-          title: 'Wanted female secretary',
-          primary_details: {
-            Place: 'Kondapur, Hyderabad',
-            Salary: '₹15000 - ₹25000',
-            Job_Type: 'ఆఫీస్ జాబ్ ',
-            Experience: '1-3 Years',
-            Qualification: 'Graduate'
-          },
-          contact_preference: {
-            whatsapp_no: '9052051923'
-          },
-          // Add other properties as needed
-        }
-      ];
+      const response = await axios.get('https://testapi.getlokalapp.com/common/jobs', { params: { page } });
+      const data = response.data;
+      console.log('Jobs API Response:', response.data); // Log the response structure
 
-      // Simulate a delay to mimic API call
-      setTimeout(() => {
-        setJobs(prevJobs => [...prevJobs, ...dummyData]);
-        if (dummyData.length === 0) {
-          setHasMore(false);
-        }
-        setLoading(false);
-      }, 1000); // Adjust delay as needed
-
+      if (Array.isArray(data.jobs)) {
+        setJobs(prevJobs => [...prevJobs, ...data.jobs]);
+        if (data.jobs.length === 0) setHasMore(false);
+      } else if (Array.isArray(data.results)) {
+        setJobs(prevJobs => [...prevJobs, ...data.results]);
+        if (data.results.length === 0) setHasMore(false);
+      } else {
+        setError('Invalid response structure');
+      }
     } catch (err) {
       setError(`Failed to fetch jobs: ${err.message}`);
-      console.error('Fetch error details:', err);
+    } finally {
       setLoading(false);
     }
   }, [page]);
@@ -64,40 +40,81 @@ const Jobs = ({ setBookmarkedJobs, bookmarkedJobs }) => {
     fetchJobs();
   }, [fetchJobs]);
 
+  // Infinite scroll to load more jobs
   useEffect(() => {
     const handleScroll = () => {
-      if (
-        window.innerHeight + document.documentElement.scrollTop ===
-        document.documentElement.offsetHeight && hasMore
-      ) {
+      if (window.innerHeight + document.documentElement.scrollTop === document.documentElement.offsetHeight && hasMore) {
         setPage(prevPage => prevPage + 1);
       }
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [hasMore]);
 
+  // Bookmark functionality
   const handleBookmark = (job) => {
-    setBookmarkedJobs(prevBookmarks => [...prevBookmarks, job]);
+    if (!bookmarkedJobs.find(bookmark => bookmark.id === job.id)) {
+      const updatedBookmarkedJobs = [...bookmarkedJobs, job];
+      setBookmarkedJobs(updatedBookmarkedJobs);
+      localStorage.setItem('bookmarkedJobs', JSON.stringify(updatedBookmarkedJobs));
+    }
   };
 
+  // View details functionality
+  const handleViewDetails = (job) => {
+    navigate(`/job/${job.id}`);
+  };
+
+  // Filter jobs by type
+  const filteredJobs = jobs.filter(job => {
+    if (jobType === 'All') return true;
+    return job.primary_details?.Type === jobType;
+  });
+
+  // Sort jobs by salary (descending or ascending)
+  const sortedJobs = [...filteredJobs].sort((a, b) => {
+    if (sortOrder === 'asc') {
+      return a.primary_details?.Salary - b.primary_details?.Salary;
+    } else if (sortOrder === 'desc') {
+      return b.primary_details?.Salary - a.primary_details?.Salary;
+    }
+    return 0;
+  });
+
   return (
-    <div>
+    <div className="jobs-container">
+      {/* Filters */}
+      <div className="jobs-filter">
+        <select value={jobType} onChange={(e) => setJobType(e.target.value)}>
+          <option value="All">All Job Types</option>
+          <option value="Full-time">Full-time</option>
+          <option value="Part-time">Part-time</option>
+        </select>
+
+        <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+          <option value="">Sort by Salary</option>
+          <option value="asc">Salary: Low to High</option>
+          <option value="desc">Salary: High to Low</option>
+        </select>
+      </div>
+
+      {/* Jobs listing */}
       {loading && <p>Loading...</p>}
       {error && <p>{error}</p>}
       {jobs.length === 0 && !loading && !error && <p>No jobs available.</p>}
-      <div>
-        {jobs.map(job => (
-          <div key={job.id} style={{ border: '1px solid #ccc', padding: '10px', margin: '10px' }}>
-            <h3>{job.title || 'No title'}</h3>
-            <p>{job.primary_details?.Place || 'No location provided'}</p>
-            <p>{job.primary_details?.Salary || 'No salary info'}</p>
-            <p>{job.contact_preference?.whatsapp_no || 'No contact info'}</p>
-            <button onClick={() => handleBookmark(job)}>Bookmark</button>
+      <div className="jobs-list">
+        {sortedJobs.map(job => (
+          <div key={job.id} className="job-card">
+            <h3 className="job-title">{job.title || 'No title'}</h3>
+            <p className="job-location">{job.primary_details?.Place || 'No location provided'}</p>
+            <p className="job-salary">{job.primary_details?.Salary || 'No salary info'}</p>
+            <button className="bookmark-btn" onClick={() => handleBookmark(job)}>Bookmark</button>
+            <button className="details-btn" onClick={() => handleViewDetails(job)}>View Details</button>
           </div>
         ))}
       </div>
+
+      {!hasMore && <p className="no-more-jobs">No more jobs to load.</p>}
     </div>
   );
 };
